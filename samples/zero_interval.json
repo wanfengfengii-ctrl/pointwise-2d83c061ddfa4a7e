@@ -1,0 +1,48 @@
+{
+  "switch_hidden": {
+    "run_id": "VIB-ZERO-17", "window": [2, 2], "public": [],
+    "main": [["H", 0, 10]], "secondary": [["S2", 0, 10], ["S10", 1, 14]],
+    "queries": [
+      {"interval": ["-4", "0"], "anchors": [], "total_cost": "2", "correction": "-2", "pairs": []}
+    ]
+  },
+  "opposite_hidden": {
+    "run_id": "VIB-ZERO-17", "window": [2, 2], "public": [],
+    "main": [["H", 0, 10]], "secondary": [["S2", 0, 10], ["S10", 1, 6]],
+    "queries": [
+      {"interval": ["-4", "0"], "anchors": [], "total_cost": "4", "correction": "-4", "pairs": []}
+    ]
+  },
+  "switch_public": {
+    "run_id": "VIB-ZERO-17", "window": [2, 2], "public": ["H"],
+    "main": [["H", 0, 10]], "secondary": [["S2", 0, 10], ["S10", 1, 14]],
+    "queries": [
+      {"interval": ["-4", "0"], "anchors": [], "total_cost": "2", "correction": "-2", "pairs": [["H", "S2"]]},
+      {"interval": ["-4", "0"], "anchors": [["H", "S10"]], "total_cost": "4", "correction": "0", "pairs": [["H", "S10"]]}
+    ]
+  },
+  "fractional_switch": {
+    "run_id": "VIB-ZERO-18", "window": [2, 2], "public": ["H"],
+    "main": [["H", 0, 10]], "secondary": [["S2", 0, 10], ["S10", 1, 13]],
+    "queries": [
+      {"interval": ["-3", "0"], "anchors": [], "total_cost": "3/2", "correction": "-3/2", "pairs": [["H", "S2"]]},
+      {"interval": ["-1/3", "-1/3"], "anchors": [], "total_cost": "1/3", "correction": "-1/3", "pairs": [["H", "S2"]]}
+    ]
+  },
+  "shared_correction": {
+    "run_id": "VIB-ZERO-19", "window": [0, 0], "public": ["A"],
+    "main": [["A", 0, 10], ["H", 4, 10]], "secondary": [["S0", 0, 10], ["S1", 4, 14]],
+    "queries": [
+      {"interval": ["-4", "0"], "anchors": [], "total_cost": "4", "correction": "-4", "pairs": [["A", "S0"]]}
+    ]
+  },
+  "tie_at_peak": {
+    "run_id": "VIB-ZERO-20", "window": [2, 2], "public": ["A", "B"],
+    "main": [["A", 0, 10], ["B", 10, 10]],
+    "secondary": [["P0", 0, 9], ["P1", 1, 11], ["Q0", 10, 11], ["Q1", 11, 9]],
+    "queries": [
+      {"interval": ["-1", "1"], "anchors": [], "total_cost": "2", "correction": "0", "pairs": [["A", "P0"], ["B", "Q0"]]},
+      {"interval": ["-1", "1"], "anchors": [["A", "P0"]], "total_cost": "2", "correction": "-1", "pairs": [["A", "P0"], ["B", "Q0"]]}
+    ]
+  }
+}

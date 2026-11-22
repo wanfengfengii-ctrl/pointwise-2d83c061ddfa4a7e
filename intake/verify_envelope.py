@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from issue.envelope import IssueRegistration, body_digest, read_envelope
+from issue.envelope import V1, V2, IssueRegistration, body_digest, read_envelope
 
 
 @dataclass(frozen=True, slots=True)
@@ -8,6 +8,7 @@ class VerifiedEnvelope:
     registration: IssueRegistration
     wire: bytes
     body: bytes
+    version: int
 
 
 def verify_envelope(wire: bytes, registration: IssueRegistration) -> VerifiedEnvelope:
@@ -23,4 +24,6 @@ def verify_envelope(wire: bytes, registration: IssueRegistration) -> VerifiedEnv
         raise ValueError('packet does not match the issue registration')
     if body_digest(envelope.body) != registration.body_sha256:
         raise ValueError('packet body digest mismatch')
-    return VerifiedEnvelope(registration, wire, envelope.body)
+    if envelope.version not in (V1, V2):
+        raise ValueError('unsupported packet version')
+    return VerifiedEnvelope(registration, wire, envelope.body, envelope.version)

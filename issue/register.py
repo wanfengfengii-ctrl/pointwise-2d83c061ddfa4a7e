@@ -5,8 +5,10 @@ from alignment.candidates import build_candidates
 from alignment.costs import price_candidates
 from issue.body import build_body
 from issue.disclosure import resolve_disclosure
-from issue.envelope import IssueRegistration, body_digest, seal_envelope
+from issue.envelope import V1, V2, IssueRegistration, body_digest, seal_envelope
 from issue.evidence import build_evidence
+from issue.interval_body import build_interval_body
+from issue.interval_evidence import build_interval_evidence
 from recording.provenance import describe_revision
 from recording.revision_store import RevisionStore
 from recording.revisions import get_frozen_revision
@@ -25,14 +27,20 @@ def initialize_issue_store(connection: sqlite3.Connection) -> None:
 
 
 def issue_packet(
-    store: RevisionStore, revision_id: int, public_ids: Iterable[str],
+    store: RevisionStore, revision_id: int, public_ids: Iterable[str], *, version: int = V1,
 ) -> tuple[bytes, IssueRegistration]:
+    if type(version) is not int or version not in (V1, V2):
+        raise ValueError('unsupported packet version')
     revision = get_frozen_revision(store, revision_id)
     origin = describe_revision(revision)
     disclosure = resolve_disclosure(revision, public_ids)
-    layers = price_candidates(revision, build_candidates(revision))
-    evidence = build_evidence(layers, disclosure)
-    body = build_body(origin, disclosure, evidence)
+    if version == V1:
+        layers = price_candidates(revision, build_candidates(revision))
+        evidence = build_evidence(layers, disclosure)
+        body = build_body(origin, disclosure, evidence)
+    else:
+        evidence = build_interval_evidence(revision, disclosure)
+        body = build_interval_body(evidence)
     digest = body_digest(body)
 
     connection = store.connection
@@ -45,7 +53,7 @@ def issue_packet(
             VALUES (?, ?, ?, ?)
         ''', (origin.run_id, origin.revision_id, digest, body))
         registration = IssueRegistration(cursor.lastrowid, origin.run_id, origin.revision_id, digest)
-        packet = seal_envelope(registration.issue_id, body)
+        packet = seal_envelope(registration.issue_id, body, version)
     return packet, registration
 
 

@@ -6,7 +6,7 @@
 
 用 `issue.register.issue_packet(store, revision_id, public_ids, version=2)` 申请区间件。返回的仍是 `(packet_bytes, IssueRegistration)`。省略 `version` 时维持原 V1 行为。发行只接受指定冻结版及原规则下的公开拍，发行时无需区间和锚票。
 
-V2 沿用封套的 `issue_id`、`sha256` 和 Base64 `body` 字段，外层 `version` 为整数 2。正文固定 `run_id`、`revision_id` 及按原序排列的 `main`、`secondary` 拍号目录。隐去主拍的逐拍身份、采样序、读数、逐拍候选清单和源站逐拍见证留站。可以随件交付用于区间复核的派生代价证据，具体编码由实现定义。
+V2 沿用封套的 `issue_id`、`sha256` 和 Base64 `body` 字段，外层 `version` 为整数 2。正文固定 `run_id`、`revision_id`、只含公开主拍号且按原序排列的 `main` 目录、全部副拍号 `secondary` 目录、主轨拍数 `main_count`、公开主拍原轨位置 `public_positions` 和派生弧 `arcs`。每条弧是 `[主拍原序位置, 副拍原序位置, 整数读数差]`，读数差为 `主读数 - 副读数`；弧清单即离线可行性的唯一描述，采样窗宽不外发。隐去主拍的拍号、两轨采样序、原始读数、逐拍候选清单和源站逐拍见证留站。空披露时 `main` 和 `public_positions` 均为空列表，弧仍覆盖全部主拍位置。
 
 仍用 `intake.receive.receive_packet(receipts, packet_bytes, registration)` 实收。根据原登记校验实际正文字节和身份，并校验该版正文结构、证据数据及公开引用。仅改外层版本号不能让正文通过另一版本的验件。错件以 `ValueError` 拒绝，不新增实收。
 
@@ -24,6 +24,6 @@ V2 沿用封套的 `issue_id`、`sha256` 和 Base64 `body` 字段，外层 `vers
 
 `samples/zero_interval.json` 的每项是一份录制。将 `run_id`、`main`、`secondary` 和 `window` 交给原导入入口，冻结后用 `public` 发件。每条 `queries` 中的区间端点和预期数值以字符串保存，读样例时用 `Fraction` 转成 Python 数值。`anchors` 是签报时才交的票，`pairs` 是公开配对的预期。隐去 H 的两份样例分别用独立源库发行。现有 `windowed_run` 也可验证双锚，在 `[0,1]` 用 A→2 和 B→4 应签总差 8、修正量 1，移除副拍 3 的勘误版应签无解。
 
-可沿用原回归的 `ArchiveCase.source()` 和 `ArchiveCase.night()` 在两个库里走交班，退出源库上下文后再实收。签存后重开隔离库领取。需要核对提交拒绝时，原回归的 `reject_commit` 可用于隔离库连接。`python3 -B check_interval_samples.py` 用现有 V1 路径核对新增样例的固定零位结果。
+可沿用原回归的 `ArchiveCase.source()` 和 `ArchiveCase.night()` 在两个库里走交班，退出源库上下文后再实收。签存后重开隔离库领取。需要核对提交拒绝时，原回归的 `reject_commit` 可用于隔离库连接。`python3 -B check_interval_samples.py` 用现有 V1 路径核对新增样例的固定零位结果；`python3 -B check_interval_v2.py` 用 V2 路径核对同样样例的区间裁决、`windowed_run` 双锚与无解、合法无解签存、关源后重开领取，以及全部拒绝规则。`tests/test_interval.py` 另含 120 组随机参数，用独立的全路径枚举精确 oracle 比对分段线性求解器。
 
-保留 `.pointwise-runtime.json`。现有清单为 `version=1`、`kind=cli`，`setup` 可为空，`verify` 和 `demo` 各是一条命令的参数数组。完成后 `verify` 执行原回归及区间交班的业务核验，失败应以非零状态退出。`demo` 输出实际实收和签报结果，并展示关源签报及重开领取。
+保留 `.pointwise-runtime.json`。现有清单为 `version=1`、`kind=cli`，`setup` 为空，`verify` 和 `demo` 各是一条命令的参数数组。`verify` 入口 `check_project.py` 先执行原 unittest 回归（含 V2 用例），通过后再执行 V2 区间交班的业务核验，失败以非零状态退出。`demo` 输出实际实收和签报结果，在源库连接关闭后完成 V2 关源签报，并重开隔离库按报告号领取区间、锚票、裁决及实收出处。

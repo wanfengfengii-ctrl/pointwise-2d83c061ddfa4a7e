@@ -3,6 +3,9 @@ from dataclasses import dataclass
 
 from intake.verify_envelope import VerifiedEnvelope, verify_envelope
 from intake.verify_evidence import VerifiedEvidence, verify_evidence
+from intake.verify_interval import verify_interval_evidence
+from interval.solver import IntervalEvidence
+from issue.envelope import V1, V2
 from issue.envelope import IssueRegistration
 
 
@@ -11,7 +14,8 @@ class Receipt:
     receipt_id: int
     registration: IssueRegistration
     wire: bytes
-    evidence: VerifiedEvidence
+    version: int
+    evidence: VerifiedEvidence | IntervalEvidence
 
 
 class ReceiptStore:
@@ -30,7 +34,7 @@ class ReceiptStore:
             )
         ''')
 
-    def record_receipt(self, envelope: VerifiedEnvelope) -> int:
+    def record_receipt(self, envelope: VerifiedEnvelope, evidence) -> int:
         registration = envelope.registration
         if self.connection.in_transaction:
             raise sqlite3.ProgrammingError('packet receipt requires an idle connection')
@@ -58,4 +62,10 @@ class ReceiptStore:
         issue_id, run_id, revision_id, digest, wire = row
         registration = IssueRegistration(issue_id, run_id, revision_id, digest)
         verified = verify_envelope(wire, registration)
-        return Receipt(receipt_id, registration, wire, verify_evidence(verified))
+        if verified.version == V1:
+            evidence = verify_evidence(verified)
+        elif verified.version == V2:
+            evidence = verify_interval_evidence(verified)
+        else:  # pragma: no cover - rejected by the envelope verifier
+            raise ValueError('unsupported packet version')
+        return Receipt(receipt_id, registration, wire, verified.version, evidence)

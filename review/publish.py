@@ -2,8 +2,12 @@ from collections.abc import Iterable
 
 from intake.receipts import ReceiptStore
 from review.anchors import normalize_anchors
+from review.interval_publish import sign_interval_review
 from review.reconcile import reconcile
 from review.report_store import ReportStore, SignedReport
+
+
+__all__ = ('sign_review', 'sign_interval_review')
 
 
 def sign_review(
